@@ -10,6 +10,42 @@
         <template #activator="{ props }">
           <VListItem
             :append-icon="mdiChevronRight"
+            title="Generic / Auth Bypass"
+            v-bind="props"
+            @click.stop
+          />
+        </template>
+        <VList>
+          <VListItem
+            title="' OR 1=1--"
+            @click="applyFunction('Payload.SQLi.Generic.authBypass1')"
+          />
+          <VListItem
+            title="' OR '1'='1"
+            @click="applyFunction('Payload.SQLi.Generic.authBypass2')"
+          />
+          <VListItem
+            title='" OR "1"="1'
+            @click="applyFunction('Payload.SQLi.Generic.authBypass3')"
+          />
+          <VListItem
+            title="' OR TRUE--"
+            @click="applyFunction('Payload.SQLi.Generic.authBypass4')"
+          />
+          <VListItem
+            title="Time Based (Waitfor Delay)"
+            @click="applyFunction('Payload.SQLi.Generic.timeBased')"
+          />
+           <VListItem
+            title="Union Test (1,2,3)"
+            @click="applyFunction('Payload.SQLi.Generic.unionTest')"
+          />
+        </VList>
+      </VMenu>
+      <VMenu location="end" open-on-hover>
+        <template #activator="{ props }">
+          <VListItem
+            :append-icon="mdiChevronRight"
             title="MySQL"
             v-bind="props"
             @click.stop

@@ -4,15 +4,16 @@
   "version": "1.2.8",
   "private": true,
   "scripts": {
-    "build:chrome": "VITE_BUILD_TARGET=chrome vite build",
-    "build:firefox": "VITE_BUILD_TARGET=firefox vite build",
-    "dev:ui": "VITE_BUILD_TARGET=chrome vite",
+    "build:curlconverter": "node build/package-generators/curlconverter.js",
+    "build:chrome": "cross-env VITE_BUILD_TARGET=chrome vite build",
+    "build:firefox": "cross-env VITE_BUILD_TARGET=firefox vite build",
+    "dev:ui": "cross-env VITE_BUILD_TARGET=chrome vite",
     "dev:server": "php -d allow_url_include=on -S 127.0.0.1:8888 -t contrib",
     "lint": "eslint --ext .js,.ts,.vue ./src/ && prettier --check .",
     "lint:fix": "eslint --fix --ext .js,.ts,.vue ./src/ && prettier --write .",
     "types:check": "vue-tsc --noEmit",
-    "dist:chrome": "run build:chrome && env -C dist/chrome zip ../../${npm_package_name}-chrome.zip -FS -r .",
-    "dist:firefox": "run build:firefox && env -C dist/firefox zip ../../${npm_package_name}-firefox.zip -FS -r ."
+    "dist:chrome": "pnpm run build:chrome && env -C dist/chrome zip ../../${npm_package_name}-chrome.zip -FS -r .",
+    "dist:firefox": "pnpm run build:firefox && env -C dist/firefox zip ../../${npm_package_name}-firefox.zip -FS -r ."
   },
   "dependencies": {
     "@fontsource/roboto": "^5.1.0",
@@ -20,9 +21,9 @@
     "@mdi/js": "^7.4.47",
     "@vueuse/core": "^12.2.0",
     "crypto-js": "^4.2.0",
-    "curlconverter": "^4.11.0",
+    "curlconverter": "file:packages/curlconverter",
     "highlight.js": "^11.11.1",
-    "http-z": "^7.1.1",
+    "http-z": "7.1.1",
     "pinia": "^2.3.0",
     "vue": "^3.5.13",
     "vuetify": "^3.7.6"
@@ -35,11 +36,12 @@
     "@types/glob": "^8.1.0",
     "@types/lodash": "^4.17.13",
     "@types/node": "^22.10.2",
-    "@types/webextension-polyfill": "^0.12.1",
+    "@types/webextension-polyfill": "0.10.0",
     "@typescript-eslint/eslint-plugin": "^8.18.2",
     "@typescript-eslint/parser": "^8.18.2",
     "@vitejs/plugin-vue": "^5.2.1",
     "chrome-types": "^0.1.327",
+    "cross-env": "^10.1.0",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.31.0",
@@ -53,15 +55,13 @@
     "typescript": "^5.7.2",
     "vite": "^6.0.6",
     "vite-plugin-vuetify": "^2.0.4",
-    "vue-cli-plugin-vuetify": "^2.5.8",
     "vue-tsc": "^2.2.0",
-    "webextension-polyfill": "^0.12.0",
-    "yarn-upgrade-all": "^0.7.4"
+    "webextension-polyfill": "^0.12.0"
   },
-  "resolutions": {
-    "@types/webextension-polyfill": "patch:@types/webextension-polyfill@npm:^0.10.0#build/package-patches/@types-webextension-polyfill.patch",
-    "curlconverter": "exec:build/package-generators/curlconverter.js",
-    "http-z": "patch:http-z@npm:^7.0.0#build/package-patches/http-z.patch"
-  },
-  "packageManager": "yarn@4.5.3"
+  "pnpm": {
+    "patchedDependencies": {
+      "http-z@7.1.1": "build/package-patches/http-z.patch",
+      "@types/webextension-polyfill@0.10.0": "build/package-patches/@types-webextension-polyfill.patch"
+    }
+  }
 }

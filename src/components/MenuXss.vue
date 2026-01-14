@@ -10,6 +10,38 @@
         <template #activator="{ props }">
           <VListItem
             :append-icon="mdiChevronRight"
+            title="Basic"
+            v-bind="props"
+            @click.stop
+          />
+        </template>
+        <VList>
+          <VListItem
+            title="<script>alert(1)</script>"
+            @click="applyFunction('Payload.XSS.Basic.scriptAlert', true)"
+          />
+          <VListItem
+            title="<img onerror=alert(1)>"
+            @click="applyFunction('Payload.XSS.Basic.imgOnError', true)"
+          />
+          <VListItem
+            title="<svg onload=alert(1)>"
+            @click="applyFunction('Payload.XSS.Basic.svgOnLoad', true)"
+          />
+          <VListItem
+            title="<body onload=alert(1)>"
+            @click="applyFunction('Payload.XSS.Basic.bodyOnLoad', true)"
+          />
+           <VListItem
+            title="<iframe onload=alert(1)>"
+            @click="applyFunction('Payload.XSS.Basic.iframeOnLoad', true)"
+          />
+        </VList>
+      </VMenu>
+      <VMenu location="end" open-on-hover>
+        <template #activator="{ props }">
+          <VListItem
+            :append-icon="mdiChevronRight"
             title="Vue.js"
             v-bind="props"
             @click.stop

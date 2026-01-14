@@ -70,6 +70,46 @@
         <template #activator="{ props }">
           <VListItem
             :append-icon="mdiChevronRight"
+            title="Powershell Reverse Shell"
+            v-bind="props"
+            @click.stop
+          />
+        </template>
+        <VList>
+          <VListItem
+            title="DownloadString (IEX)"
+            @click="openReverseShellPrompt('Payload.Shell.Powershell.downloadString')"
+          />
+          <VListItem
+            title="TCP Client"
+            @click="openReverseShellPrompt('Payload.Shell.Powershell.tcpClient')"
+          />
+        </VList>
+      </VMenu>
+      <VMenu location="end" open-on-hover>
+        <template #activator="{ props }">
+          <VListItem
+            :append-icon="mdiChevronRight"
+            title="JSP / ASPX Web Shells"
+            v-bind="props"
+            @click.stop
+          />
+        </template>
+        <VList>
+          <VListItem
+            title="ASPX Shell (cmd.exe)"
+            @click="applyFunction('Payload.Shell.Web.ASPX', true)"
+          />
+          <VListItem
+            title="JSP Shell (Runtime.exec)"
+            @click="applyFunction('Payload.Shell.Web.JSP', true)"
+          />
+        </VList>
+      </VMenu>
+      <VMenu location="end" open-on-hover>
+        <template #activator="{ props }">
+          <VListItem
+            :append-icon="mdiChevronRight"
             title="PHP Webshell/Reverse Shell"
             v-bind="props"
             @click.stop

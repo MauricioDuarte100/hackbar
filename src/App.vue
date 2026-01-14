@@ -24,16 +24,27 @@
         </VList>
       </VMenu>
       <VBtn variant="text" :disabled="isRawMode" @click="split">Split</VBtn>
-      <VBtn variant="text" @click="execute">Execute</VBtn>
+      <VTooltip location="bottom">
+        <template #activator="{ props }">
+          <VBtn variant="text" @click="execute" v-bind="props">Execute</VBtn>
+        </template>
+        <span>Execute Request (Ctrl + Enter)</span>
+      </VTooltip>
+      <VBtn variant="text" @click="smartInject">Smart Inject</VBtn>
       <MenuTest />
       <MenuSqli />
       <MenuXss />
+      <MenuCMDi />
       <MenuLfi />
+      <MenuXXE />
       <MenuSsrf />
       <MenuSsti />
+      <MenuNoSQL />
+      <MenuOpenRedirect />
       <MenuShell />
       <MenuEncoding />
       <MenuHashing />
+      <MenuJwt />
       <MenuCustomPayload />
       <VSpacer />
       <VMenu>
@@ -99,12 +110,13 @@ import {
   defineComponent,
   nextTick,
   onMounted,
+  onUnmounted,
   provide,
   reactive,
   ref,
   watch,
 } from 'vue'
-import { VAppBar } from 'vuetify/components'
+import { VAppBar, VTooltip } from 'vuetify/components'
 import { useTheme } from 'vuetify/framework'
 import browser from 'webextension-polyfill'
 import DialogCustomPayloadManagement from './components/DialogCustomPayloadManagement.vue'
@@ -114,18 +126,30 @@ import DialogReverseShellSetting from './components/DialogReverseShellSetting.vu
 import DialogSqlInjectionSetting from './components/DialogSqlInjectionSetting.vue'
 import DialogTestProgress from './components/DialogTestProgress.vue'
 import MenuCustomPayload from './components/MenuCustomPayload.vue'
+import MenuCMDi from './components/MenuCMDi.vue'
 import MenuEncoding from './components/MenuEncoding.vue'
 import MenuHashing from './components/MenuHashing.vue'
+import MenuJwt from './components/MenuJwt.vue'
 import MenuLfi from './components/MenuLfi.vue'
+import MenuNoSQL from './components/MenuNoSQL.vue'
+import MenuOpenRedirect from './components/MenuOpenRedirect.vue'
 import MenuShell from './components/MenuShell.vue'
 import MenuSqli from './components/MenuSqli.vue'
 import MenuSsrf from './components/MenuSsrf.vue'
 import MenuSsti from './components/MenuSsti.vue'
 import MenuTest from './components/MenuTest.vue'
 import MenuXss from './components/MenuXss.vue'
+import MenuXXE from './components/MenuXXE.vue'
 import RequestPanelBasic from './components/RequestPanelBasic.vue'
 import RequestPanelRaw from './components/RequestPanelRaw.vue'
 import bodyProcessors from './processors'
+// Imports from generators
+import { Encode } from './generators/encode'
+import { Hash } from './generators/hash'
+import { Payload } from './generators/payload'
+
+const GlobalContext = { Encode, Hash, Payload }
+
 import { useCustomPayloadStore } from './stores'
 import {
   AppBarKey,
@@ -136,6 +160,7 @@ import {
   OpenReverseShellPromptKey,
   OpenSqlInjectionPromptKey,
 } from './utils/constants'
+import { injectIntoAllParams } from './utils/autoinject'
 
 type RuntimePort = Omit<browser.Runtime.Port, 'postMessage'> & {
   postMessage(
@@ -151,15 +176,21 @@ type RuntimePort = Omit<browser.Runtime.Port, 'postMessage'> & {
 export default defineComponent({
   name: 'App',
   components: {
+    VTooltip,
     MenuTest,
     MenuSqli,
     MenuXss,
+    MenuCMDi,
     MenuLfi,
+    MenuXXE,
     MenuSsrf,
     MenuSsti,
+    MenuNoSQL,
+    MenuOpenRedirect,
     MenuShell,
     MenuEncoding,
     MenuHashing,
+    MenuJwt,
     MenuCustomPayload,
     DialogReloadPrompt,
     DialogSqlInjectionSetting,
@@ -286,6 +317,23 @@ export default defineComponent({
       })
     }
 
+    const smartInject = () => {
+      const payload = prompt('Enter payload to inject into all parameters:', "' OR '1'='1")
+      if (payload) {
+        const newReq = injectIntoAllParams(request, payload)
+        request.url = newReq.url
+        request.body.content = newReq.body.content
+        nextTick(() => execute())
+      }
+    }
+
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'Enter') {
+        execute()
+        e.preventDefault()
+      }
+    }
+
     function isLoadMessage(
       m: DevtoolsFunctionMessage,
     ): m is DevtoolsLoadMessage {
@@ -402,6 +450,7 @@ export default defineComponent({
 
     /* Saved data */
     onMounted(async () => {
+      window.addEventListener('keydown', handleKeydown)
       const systemDarkModeEnabled = window.matchMedia(
         '(prefers-color-scheme: dark)',
       ).matches
@@ -414,6 +463,11 @@ export default defineComponent({
       isRawMode.value = preferences.rawModeEnabled
     })
 
+    onUnmounted(() => {
+      window.removeEventListener('keydown', handleKeydown)
+    })
+
+
     const { init: initCustomPayloadStore } = useCustomPayloadStore()
     onMounted(async () => {
       await initCustomPayloadStore()
@@ -425,7 +479,7 @@ export default defineComponent({
       root: any,
       returnName: boolean,
     ) => {
-      let namespace = root === undefined ? window : root
+      let namespace = root === undefined ? GlobalContext : root
 
       const paths = path.split('.')
       for (let idx = 0; idx < paths.length - 1; idx++) {
@@ -470,7 +524,7 @@ export default defineComponent({
         }
       }
 
-      const funcObj = getNamespaceByPath(func, window, true)
+      const funcObj = getNamespaceByPath(func, GlobalContext, true)
       let processed = argument
       try {
         processed = funcObj.namespace[funcObj.name](argument)
@@ -478,6 +532,7 @@ export default defineComponent({
         snackbar.value.text = (error as Error).message
         snackbar.value.show = true
       }
+// ... rest of function ...
 
       await nextTick()
 
@@ -485,16 +540,24 @@ export default defineComponent({
       if (!textSelected && !insertWhenNoSelection) {
         startIndex = 0
         endIndex = inputText.length
-
-        document.execCommand('selectAll')
       }
 
-      document.execCommand('insertText', false, processed)
+      domFocusedInput.setRangeText(processed, startIndex, endIndex, 'end')
+      domFocusedInput.dispatchEvent(new Event('input', { bubbles: true }))
 
-      domFocusedInput.setSelectionRange(
-        startIndex + (textSelected ? 0 : processed.length),
-        startIndex + processed.length,
-      )
+      if (textSelected) {
+        // Select the newly inserted text (mimicking original behavior)
+        domFocusedInput.setSelectionRange(
+            startIndex,
+            startIndex + processed.length
+        )
+      } else {
+        // Cursor at end
+        domFocusedInput.setSelectionRange(
+            startIndex + processed.length,
+            startIndex + processed.length
+        )
+      }
     }
 
     const openSqlInjectionPrompt = (func: string, positionRequired = true) => {
@@ -511,6 +574,7 @@ export default defineComponent({
     const openCustomPayloadManagement = () => {
       customPayloadDialog.value.show = true
     }
+
 
     provide(ApplyFunctionKey, applyFunction)
     provide(OpenSqlInjectionPromptKey, openSqlInjectionPrompt)
@@ -584,6 +648,7 @@ export default defineComponent({
       load,
       split,
       execute,
+      smartInject,
       enableRawMode,
       enableDarkTheme,
       onFocus,
