@@ -4,14 +4,14 @@ The ultimate browser extension for **Penetration Testing**, **CTF**, and **Bug B
 
 HackBar Pro is an enhanced version of the classic HackBar, redesigned to meet the needs of modern security professionals. It offers a comprehensive suite of tools for payload generation, encoding/decoding, and automated testing, all integrated directly into your browser's Developer Tools.
 
-## 🚀 Key Features
+## Key Features
 
-### ⚡ Smart & Automated
+### Smart & Automated
 *   **Smart Inject Auto-Fuzzer**: Automatically injects payloads into *every* URL parameter and POST body field with a single click. Ideal for quickly checking multiple input vectors.
 *   **One-Click Reverse Shells**: Generate ready-to-use reverse shell commands for Python, Bash, Perl, PHP, PowerShell, and Netcat.
 *   **Auto-Execute**: Shortcuts (`Ctrl + Enter`) and smart interactions designed for speed.
 
-### 🔥 Comprehensive Payload Library
+### Comprehensive Payload Library
 HackBar Pro comes packed with categorized payloads for major vulnerabilities:
 
 *   **SQL Injection (SQLi)**: Union-based, Error-based, Boolean-blind, Time-blind. Supported DBs: MySQL, PostgreSQL, SQLite, MSSQL.
@@ -22,14 +22,14 @@ HackBar Pro comes packed with categorized payloads for major vulnerabilities:
 *   **LFI (Local File Inclusion)**: Wrapper techniques (`php://filter`), path traversal.
 *   **Open Redirect**: Common bypass patterns (`//`, `/\`, `%00`).
 
-### 🛠️ Utility Belt
+### Utility Belt
 *   **Encoding/Decoding**: URL, Base64, Hex, Unicode, HTML Entity.
 *   **Hashing**: MD5, SHA1, SHA256, SHA512.
 *   **JWT Tool**: Decode and analyze JSON Web Tokens instantly.
 
 ---
 
-## 📖 How to Use
+## How to Use
 
 ### 1. Installation
 1.  Download or build the extension (`dist/chrome` or `dist/firefox`).
@@ -56,7 +56,7 @@ HackBar Pro comes packed with categorized payloads for major vulnerabilities:
 
 ---
 
-## 🏗️ Development & Building
+## Development & Building
 
 **Requirements**: Node.js 16+, pnpm (recommended) or yarn.
 
@@ -78,8 +78,8 @@ The output will be in `dist/chrome` or `dist/firefox`.
 
 ---
 
-## 🤝 Contributing
+## Contributing
 Contributions are welcome! Please submit Pull Requests to add new payloads, fix bugs, or improve the UI.
 
-## 📄 License
+## License
 MIT License. Use responsibly for educational and authorized testing purposes only.
