@@ -52,9 +52,32 @@ const handleMessage = async (message: BackgroundFunctionMessage) => {
 
     openExtensionPermissionGrantPage()
   } else if (isLoadMessage(message)) {
+    let request = await store.getBrowseRequest(message.tabId)
+
+    // Fallback: If no request recorded (e.g. extension loaded after page), get current URL
+    if (!request) {
+      try {
+        const tab = await browser.tabs.get(message.tabId)
+        if (tab && tab.url) {
+          request = {
+            method: 'GET',
+            url: tab.url,
+            body: {
+              content: '',
+              enctype: bodyProcessors.getDefaultProcessorName(),
+            },
+            headers: [],
+            followRedirect: false,
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fallback to tab URL', e)
+      }
+    }
+
     connection.postMessage({
       type: 'load',
-      data: await store.getBrowseRequest(message.tabId),
+      data: request,
     })
   } else if (isExecuteMessage(message)) {
     const { rawMode: isRawMode, request } = message.data
