@@ -7,22 +7,20 @@
       flat
       @wheel.prevent="onScrollAppBar"
     >
-      <VBtn variant="text" @click="load">Load</VBtn>
-      <VDivider vertical inset />
-      <VMenu>
+      <VBtn
+        class="title"
+        variant="text"
+        :prepend-icon="mdiFlash"
+        @click="load"
+      >
+        Load
+      </VBtn>
+      <VTooltip location="bottom">
         <template #activator="{ props }">
-          <VBtn variant="text" v-bind="props" :class="$style.loadMoreActionBtn">
-            <VIcon :icon="mdiMenuDown" />
-          </VBtn>
+          <VBtn variant="text" @click="restore" v-bind="props" :icon="mdiRestore" />
         </template>
-        <VList>
-          <VListItem title="From tab (default)" @click="load" />
-          <VListItem
-            title="From cURL command"
-            @click="requestLoaderDialog.show = true"
-          />
-        </VList>
-      </VMenu>
+        <span>Restore Original URL</span>
+      </VTooltip>
       <VBtn variant="text" :disabled="isRawMode" @click="split">Split</VBtn>
       <VTooltip location="bottom">
         <template #activator="{ props }">
@@ -30,22 +28,29 @@
         </template>
         <span>Execute Request (Ctrl + Enter)</span>
       </VTooltip>
-      <VBtn variant="text" @click="smartInject">Smart Inject</VBtn>
-      <MenuTest />
-      <MenuSqli />
-      <MenuXss />
-      <MenuCMDi />
-      <MenuLfi />
-      <MenuXXE />
-      <MenuSsrf />
-      <MenuSsti />
-      <MenuNoSQL />
-      <MenuOpenRedirect />
-      <MenuShell />
-      <MenuEncoding />
-      <MenuHashing />
-      <MenuJwt />
-      <MenuCustomPayload />
+      <VTooltip location="bottom">
+        <template #activator="{ props }">
+          <VBtn variant="text" @click="smartInject" v-bind="props">Smart Inject</VBtn>
+        </template>
+        <span>Inject payload into all parameters</span>
+      </VTooltip>
+      <VBtn variant="text" @click="randomCrap">Random Crap</VBtn>
+      
+      <draggable 
+        v-model="menus" 
+        item-key="id"
+        class="d-flex align-center flex-nowrap"
+        @end="saveMenuOrder"
+        :animation="200"
+        :component-data="{ name: 'fade' }"
+      >
+        <template #item="{ element }">
+          <div class="draggable-menu-item cursor-move">
+             <component :is="element.component" />
+          </div>
+        </template>
+      </draggable>
+
       <VSpacer />
       <VMenu>
         <template #activator="{ props }">
@@ -105,7 +110,7 @@
 </template>
 
 <script lang="ts">
-import { mdiMenuDown } from '@mdi/js'
+import { mdiMenuDown, mdiFlash, mdiRestore } from '@mdi/js'
 import {
   defineComponent,
   nextTick,
@@ -118,6 +123,7 @@ import {
 } from 'vue'
 import { VAppBar, VTooltip } from 'vuetify/components'
 import { useTheme } from 'vuetify/framework'
+import draggable from 'vuedraggable'
 import browser from 'webextension-polyfill'
 import DialogCustomPayloadManagement from './components/DialogCustomPayloadManagement.vue'
 import DialogReloadPrompt from './components/DialogReloadPrompt.vue'
@@ -130,6 +136,7 @@ import MenuCMDi from './components/MenuCMDi.vue'
 import MenuEncoding from './components/MenuEncoding.vue'
 import MenuHashing from './components/MenuHashing.vue'
 import MenuJwt from './components/MenuJwt.vue'
+import MenuPolyglot from './components/MenuPolyglot.vue'
 import MenuLfi from './components/MenuLfi.vue'
 import MenuNoSQL from './components/MenuNoSQL.vue'
 import MenuOpenRedirect from './components/MenuOpenRedirect.vue'
@@ -160,7 +167,7 @@ import {
   OpenReverseShellPromptKey,
   OpenSqlInjectionPromptKey,
 } from './utils/constants'
-import { injectIntoAllParams } from './utils/autoinject'
+import { injectIntoAllParams, injectRandomData } from './utils/autoinject'
 
 type RuntimePort = Omit<browser.Runtime.Port, 'postMessage'> & {
   postMessage(
@@ -176,6 +183,7 @@ type RuntimePort = Omit<browser.Runtime.Port, 'postMessage'> & {
 export default defineComponent({
   name: 'App',
   components: {
+    draggable,
     VTooltip,
     MenuTest,
     MenuSqli,
@@ -191,6 +199,7 @@ export default defineComponent({
     MenuEncoding,
     MenuHashing,
     MenuJwt,
+    MenuPolyglot,
     MenuCustomPayload,
     DialogReloadPrompt,
     DialogSqlInjectionSetting,
@@ -209,6 +218,30 @@ export default defineComponent({
       ref<InstanceType<typeof RequestPanelBasic | typeof RequestPanelRaw>>()
 
     provide(AppBarKey, appBar)
+
+    /* Menus */
+    const menus = ref([
+      { id: 'MenuSqli', component: 'MenuSqli' },
+      { id: 'MenuXss', component: 'MenuXss' },
+      { id: 'MenuPolyglot', component: 'MenuPolyglot' },
+      { id: 'MenuCMDi', component: 'MenuCMDi' },
+      { id: 'MenuTest', component: 'MenuTest' },
+      { id: 'MenuLfi', component: 'MenuLfi' },
+      { id: 'MenuXXE', component: 'MenuXXE' },
+      { id: 'MenuSsrf', component: 'MenuSsrf' },
+      { id: 'MenuSsti', component: 'MenuSsti' },
+      { id: 'MenuNoSQL', component: 'MenuNoSQL' },
+      { id: 'MenuOpenRedirect', component: 'MenuOpenRedirect' },
+      { id: 'MenuShell', component: 'MenuShell' },
+      { id: 'MenuEncoding', component: 'MenuEncoding' },
+      { id: 'MenuHashing', component: 'MenuHashing' },
+      { id: 'MenuJwt', component: 'MenuJwt' },
+      { id: 'MenuCustomPayload', component: 'MenuCustomPayload' },
+    ])
+
+    const saveMenuOrder = () => {
+      browser.storage.local.set({ menuOrder: menus.value.map(m => m.id) })
+    }
 
     /* Dialog */
     const reloadDialog = ref({
@@ -253,6 +286,10 @@ export default defineComponent({
       headers: [],
       followRedirect: false,
     })
+    
+    // Checkpoint for Restore
+    let checkpointRequest: BrowseRequest | null = null
+
     const response = ref<BrowseResponse>()
     /* Mode / Status */
     const isRawMode = ref(false)
@@ -285,7 +322,23 @@ export default defineComponent({
       request.body = source.body
       request.headers = source.headers
 
+      // Save checkpoint on load
+      checkpointRequest = JSON.parse(JSON.stringify(request))
+      
       requestPanel.value!.focus()
+    }
+
+    const restore = () => {
+        if (checkpointRequest) {
+            request.method = checkpointRequest.method
+            request.url = checkpointRequest.url
+            request.body.content = checkpointRequest.body.content
+            request.headers = checkpointRequest.headers
+            requestPanel.value!.focus()
+            snackbar.value.text = 'Restored & Executed Checkpoint'
+            snackbar.value.show = true
+            nextTick(() => execute())
+        }
     }
 
     const split = () => {
@@ -325,6 +378,18 @@ export default defineComponent({
         request.body.content = newReq.body.content
         nextTick(() => execute())
       }
+    }
+
+    const randomCrap = () => {
+       const payload = prompt('Enter payload to append to random data (optional):', "'")
+       const p = payload === null ? '' : payload 
+       // If user cancels (null), we do nothing. But if empty string, that's fine (just fuzzing)
+       if (payload !== null) {
+          const newReq = injectRandomData(request, p)
+          request.url = newReq.url
+          request.body.content = newReq.body.content
+          nextTick(() => execute())
+       }
     }
 
     const handleKeydown = (e: KeyboardEvent) => {
@@ -457,10 +522,31 @@ export default defineComponent({
       const preferences = (await browser.storage.local.get({
         darkThemeEnabled: systemDarkModeEnabled,
         rawModeEnabled: false,
-      })) as Preferences
+        menuOrder: null
+      })) as Preferences & { menuOrder?: string[] }
 
       enableDarkTheme(preferences.darkThemeEnabled)
       isRawMode.value = preferences.rawModeEnabled
+      
+      if (preferences.menuOrder) {
+        // Re-sort menus based on saved order
+        const orderMap = new Map(preferences.menuOrder.map((id, index) => [id, index]))
+        menus.value.sort((a, b) => {
+           const idxA = orderMap.get(a.id) ?? 999
+           const idxB = orderMap.get(b.id) ?? 999
+           return idxA - idxB
+        })
+      }
+
+      // Auto Load on Startup
+      load()
+
+      // Auto Load on Navigation (if available in this context)
+      if (browser.devtools && browser.devtools.network && browser.devtools.network.onNavigated) {
+        browser.devtools.network.onNavigated.addListener(() => {
+            load()
+        })
+      }
     })
 
     onUnmounted(() => {
@@ -649,11 +735,19 @@ export default defineComponent({
       split,
       execute,
       smartInject,
+      randomCrap,
+      restore,
+      menus,
+      saveMenuOrder,
       enableRawMode,
       enableDarkTheme,
       onFocus,
       onScrollAppBar,
       onRenderRequested,
+      controlTest,
+
+      mdiFlash,
+      mdiRestore,
     }
   },
 })
